@@ -1,53 +1,108 @@
-Problem Statement:
-A notification service that facilitates the sending of notifications thorugh email, slack, in-app notification 
+## Problem Statement:  
+A notification service that facilitates the sending of notifications thorugh email, slack, in-app notification   
 
-Requirements:
-1. Send Notifications through channels like Email, Slack, In-app
-2. Producers tells notification service
-    a. to send the message instantly
-    b. to send the message in future
-3. Producers can design their own template
+## Requirements:  
+1. Send Notifications through channels like Email, Slack, In-app. 
+2. Producers tells notification service. 
+    a. to send the message instantly. 
+    b. to send the message in future. 
+3. Producers can design their own template. 
 
-APIs
-1. POST /producer/template
-Request Body:
+---
+
+## Project Structure
+
+```
+.
+├── datastore/        # In-memory datastore
+├── handler/          # HTTP handlers for templates and notifications
+├── model/            # Data models and enums
+├── service/          # Business logic, scheduling, heap operations
+├── main.go           # Application entrypoint
+├── go.mod
+├── go.sum
+└── README.md
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Go 1.18+
+- Git
+
+### Clone and Build
+```bash
+git clone https://github.com/<your-username>/notification-service.git
+cd notification-service
+go mod tidy
+go build
+```
+
+### Run the Service
+```bash
+go run main.go
+```
+
+The server will start at:
+```
+http://localhost:8080
+```
+
+---
+
+## API Endpoints
+
+### 1. Create a Template
+**POST** `/producer/template`
+
+**Request Body:**
+```json
 {
-    "name":
-    "subject":
-    "content":
+  "name": "welcome",
+  "subject": "Hi {0}",
+  "message": "Welcome {0} to {1}"
 }
+```
 
-2. POST /consumer/register&type=[slack/inapp/email]
-Request Body:
+**Response:**
+```json
 {
-    "detail": "slackId/mobileId/EmailId"
+  "code": 200,
+  "message": "Successfully inserted for welcome"
 }
+```
 
-Data model
-1. Notification:
-    a. to
-    b. from
-    c. template
-    d. time
-    e. content
+---
 
+### 2. Send a Notification
+**POST** `/producer/notify`
 
-Payment Reminder
-"Dear {0}, please clear your pending payment before {1}. Thank you."
+**Request Body (Immediate Send):**
+```json
+{
+  "to": "user@example.com",
+  "from": "noreply@example.com",
+  "message": {
+    "subject": "Hello",
+    "body": "This is an immediate message"
+  },
+  "channel": "email"
+}
+```
 
-Job Recommendation
-"Hi {0}, we found a job matching your skills. Apply soon!"
-
-Product Sale
-"Exclusive offer! Get {0} at discounted price until {1}. Hurry!"
-
-curl -X POST http://localhost:8080/producer/template \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Payment Reminder",
-    "subject": "Payment Due Reminder",
-    "message": "Dear {0}, please clear your pending payment before {1}. Thank you."
-  }'
-
-
-
+**Request Body (With Template and Delay):**
+```json
+{
+  "to": "user@example.com",
+  "from": "noreply@example.com",
+  "template": "welcome",
+  "time": 25,
+  "message": {
+    "subplaceholder": ["Alice"],
+    "bodyplaceholder": ["Alice", "GoLang Community"]
+  },
+  "channel": "email"
+}
+```
