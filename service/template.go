@@ -7,7 +7,7 @@ import (
 	"github.com/priykumar/notification-service/model"
 )
 
-type TemplateService interface {
+type TemplateSaver interface {
 	CreateTemplate(model.Template) error
 }
 
@@ -15,18 +15,9 @@ type templateService struct {
 	db datastore.DataStore
 }
 
-func NewTemplateService(d datastore.DataStore) TemplateService {
+func NewTemplateService(d datastore.DataStore) TemplateSaver {
 	return &templateService{db: d}
 }
-
-// func (t *templateService) GetTemplate(tname string) (*model.Template, error) {
-// 	template := t.db.GetTemplate(tname)
-// 	if template == nil {
-// 		return nil, fmt.Errorf("could not find desired template")
-// 	}
-
-// 	return template, nil
-// }
 
 func (t *templateService) CreateTemplate(template model.Template) error {
 
@@ -42,16 +33,3 @@ func (t *templateService) CreateTemplate(template model.Template) error {
 	fmt.Println("New entry for template ", template.Name, "successfully done")
 	return nil
 }
-
-// func (t *templateService) ModifyTemplate(template model.Template) error {
-// 	if isValid, msg := validateTemplate(template); !isValid {
-// 		fmt.Println("Failed in template validation. Reason: ", msg)
-// 		return fmt.Errorf("failed in template validation. %s", msg)
-// 	}
-
-// 	if err := t.db.ModifyTemplate(template); err != nil {
-// 		return fmt.Errorf("failed modifying template, %v", err)
-// 	}
-
-// 	return nil
-// }

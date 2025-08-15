@@ -11,7 +11,7 @@ import (
 )
 
 type TemplateHandler struct {
-	svc service.TemplateService
+	svc service.TemplateSaver
 }
 
 // validate request
@@ -27,7 +27,7 @@ func validateTemplate(t model.Template) (bool, string) {
 	return true, ""
 }
 
-func NewTemplateHandler(s service.TemplateService) *TemplateHandler {
+func NewTemplateHandler(s service.TemplateSaver) *TemplateHandler {
 	return &TemplateHandler{svc: s}
 }
 

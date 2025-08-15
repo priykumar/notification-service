@@ -15,9 +15,9 @@ func main() {
 	tSvc := service.NewTemplateService(db)
 	nSvc := service.NewNotificationService(db)
 	tHandler := handler.NewTemplateHandler(tSvc)
-	nHandler := handler.NewNotificationHandler(*nSvc)
+	nHandler := handler.NewNotificationHandler(nSvc)
 
-	go nSvc.MonitorAndPop()
+	go service.MonitorAndPop(nSvc)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/producer/template", tHandler.CreateTemplate).Methods("POST")

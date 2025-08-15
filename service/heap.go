@@ -55,7 +55,7 @@ func populateHeap(ncation model.Notification) {
 // 1. Scan heap every HEAP_SCAN_INTERVAL
 // 2. Keeping popping element from heap and create ticker those element if time for element
 // to pushed to channel is less than POP_FROM_HEAP_IF_LESS_THAN
-func (not *NotificationService) MonitorAndPop() {
+func (not *NotificationService) monitorAndPop() {
 	ticker := time.NewTicker(time.Duration(HEAP_SCAN_INTERVAL) * time.Second)
 	defer ticker.Stop()
 

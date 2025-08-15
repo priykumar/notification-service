@@ -14,6 +14,7 @@ func GenerateResponse(w http.ResponseWriter, code int, message string) {
 		Message: message,
 	}
 
+	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(resp)
 	jsonBytes, _ := json.MarshalIndent(resp, "", "  ")
 	fmt.Printf("Generating response: %s\n\n", string(jsonBytes))

@@ -13,10 +13,10 @@ import (
 )
 
 type NotificationHandler struct {
-	svc service.NotificationService
+	svc service.NotificationSender
 }
 
-func NewNotificationHandler(s service.NotificationService) *NotificationHandler {
+func NewNotificationHandler(s service.NotificationSender) *NotificationHandler {
 	return &NotificationHandler{svc: s}
 }
 
@@ -65,7 +65,7 @@ func (n *NotificationHandler) CreateNotification(w http.ResponseWriter, r *http.
 
 	// Create unique for each notification and send notification to channel
 	ncation.ID = uuid.New().String()
-	if code, err := n.svc.SendNotification(ncation.Channel, ncation); err != nil {
+	if code, err := n.svc.Send(ncation); err != nil {
 		fmt.Println("Failed to generate notification. Reason: ", err.Error())
 		GenerateResponse(w, code, "Failed in notification validation. "+err.Error())
 		return

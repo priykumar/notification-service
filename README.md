@@ -1,4 +1,4 @@
-Probelm Statement:
+Problem Statement:
 A notification service that facilitates the sending of notifications thorugh email, slack, in-app notification 
 
 Requirements:

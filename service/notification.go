@@ -1,19 +1,16 @@
+// Approach 2: Single generic notification sender
+
 package service
 
 import (
 	"container/heap"
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/priykumar/notification-service/datastore"
 	"github.com/priykumar/notification-service/model"
 )
 
-const HEAP_SCAN_INTERVAL int = 15
-const POP_FROM_HEAP_IF_LESS_THAN int = 20
-
-type Notification interface {
+type NotificationSender interface {
 	Send(model.Notification) (int, error)
 }
 
@@ -21,7 +18,7 @@ type NotificationService struct {
 	db datastore.DataStore
 }
 
-func NewNotificationService(d datastore.DataStore) *NotificationService {
+func NewNotificationService(d datastore.DataStore) NotificationSender {
 	// Initialse heap and start ticket that montiors the heap
 	minheap = &NotificationHeap{}
 	heap.Init(minheap)
@@ -29,58 +26,56 @@ func NewNotificationService(d datastore.DataStore) *NotificationService {
 	return &NotificationService{db: d}
 }
 
-func (n *NotificationService) SendNotification(ch model.Channel, detail model.Notification) (int, error) {
-	var notify Notification
-	switch ch {
-	case model.EMAIL:
-		notify = &Email{db: n.db}
+//  1. Check template validity if template is provide in request
+//  2. Check if placeholder count expected by template is same as placeholder count provided in request
+//  3. If no template, then simply post subject and message provided in request
+//  4. Check is channel needs to be populated now
+//  5. If not, then check after long how channel needs to be populated
+//     a. If population time < POP_FROM_HEAP_IF_LESS_THAN, spawn a ticker for that notification
+//     b. Else, push notification to min-heap
+func (g *NotificationService) Send(nDetail model.Notification) (int, error) {
+	template := &model.Template{}
+	var err error
+
+	// If specific template needs to be used then create the template
+	if nDetail.Template != nil {
+		// check if mentioned template is correct
+		template = g.db.GetTemplate(*nDetail.Template)
+		if template == nil {
+			fmt.Println("Provide a valid template name. No template named", *nDetail.Template, "found")
+			return 400, fmt.Errorf("invalid template")
+		}
+
+		// Populate placeholders in template
+		template, err = populatePlaceholders(*template, nDetail.Message)
+		if err != nil {
+			fmt.Println("Failed populating placeholders in template. Reason:", err)
+			return 400, err
+		}
+	} else {
+		template.Subject = nDetail.Message.Subject
+		template.Message = nDetail.Message.Body
 	}
 
-	return notify.Send(detail)
-}
-
-func shouldBeSentNow(t *int) bool {
-	return t == nil
-}
-
-func getPlaceholderCount(str string) int {
-	re := regexp.MustCompile(`\{\d+\}`)
-	matches := re.FindAllString(str, -1)
-	return len(matches)
-}
-
-// Populate placeholders in saved template
-func populatePlaceholders(template model.Template, content model.Content) (*model.Template, error) {
-	phCountSubject := getPlaceholderCount(template.Subject)
-	phCountMsg := getPlaceholderCount(template.Message)
-	if len(content.SubPlaceHolder) != phCountSubject || (len(content.BodyPlaceHolder) != phCountMsg) {
-		return nil, fmt.Errorf("placeholder needed in template deosn't match with provided count")
+	if shouldBeSentNow(nDetail.SendTimeInSec) {
+		// Check if end user needs to be notified now
+		populateChannel(nDetail.To, nDetail.From, template.Subject, template.Message, nDetail.Channel)
+	} else {
+		nDetail.Message.Subject = template.Subject
+		nDetail.Message.Body = template.Message
+		if *nDetail.SendTimeInSec < POP_FROM_HEAP_IF_LESS_THAN {
+			fmt.Println("Notification needs to sent in ", *nDetail.SendTimeInSec, "(<", POP_FROM_HEAP_IF_LESS_THAN, ") seconds, hence starting a ticker")
+			go startTicker(&nDetail)
+		} else {
+			fmt.Println("Notification needs to sent in ", *nDetail.SendTimeInSec, "(>", POP_FROM_HEAP_IF_LESS_THAN, ") seconds, hence pushing in heap")
+			g.db.PutNotification(nDetail)
+			go populateHeap(nDetail)
+		}
 	}
 
-	// Populate placeholders in subject
-	for i, val := range content.SubPlaceHolder {
-		ph := fmt.Sprintf("{%d}", i)
-		template.Subject = strings.ReplaceAll(template.Subject, ph, val)
-	}
-
-	// Populate placeholders in message
-	for i, val := range content.BodyPlaceHolder {
-		ph := fmt.Sprintf("{%d}", i)
-		template.Message = strings.ReplaceAll(template.Message, ph, val)
-	}
-
-	return &template, nil
+	return 200, nil
 }
 
-func populateChannel(to, from, sub, msg string, ch model.Channel) {
-	fmt.Printf(`
-MODE: %s
-TO: %s
-FROM: %s
-SUBJECT: %s
-
-Message: %s`,
-		ch, to, from, sub, msg)
-	fmt.Println()
-	fmt.Println()
+func MonitorAndPop(n NotificationSender) {
+	n.(*NotificationService).monitorAndPop()
 }
