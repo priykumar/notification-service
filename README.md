@@ -123,3 +123,11 @@ http://localhost:8080
   "channel": "email"
 }
 ```
+
+**Response:**
+```json
+{
+  "code": 200,
+  "message": ""
+}
+```
