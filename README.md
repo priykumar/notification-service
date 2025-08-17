@@ -58,6 +58,11 @@ http://localhost:8080
 **POST** `/producer/template`
 
 **Request Body:**
+```
+  name: Template name
+  subject: Subject for the template
+  message: Message for the template
+```
 ```json
 {
   "name": "welcome",
@@ -80,6 +85,18 @@ http://localhost:8080
 **POST** `/producer/notify`
 
 **Request Body (Immediate Send):**
+```
+  to: Receiver's detail like emailID, slackID, mobileID
+  from: Sender's details
+  template: Template Name if any pre-defined needs to be used [Shuold be same as template name]
+  time: Delay in seconds before sending notification. If not provided then instant delivery
+  message: Message to be sent
+      subject: Subject of the notification. This is used when no template is provided. 
+      subplaceholder: Subject of the notification. This is used when template is provided. 
+      body: Body of the notification. This is used when no template is provided. 
+      bodyplaceholder: Body of the notification. This is used when template is provided. 
+  channel: channel name [email, inapp, slack]
+```
 ```json
 {
   "to": "user@example.com",
