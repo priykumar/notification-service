@@ -1,5 +1,5 @@
 ## Problem Statement:  
-A notification service that facilitates the sending of notifications thorugh email, slack, in-app notification   
+A notification service that facilitates the sending of notifications through email, slack, in-app notification   
 
 ## Requirements:  
 1. Send Notifications through channels like Email, Slack, In-app. 
@@ -121,5 +121,13 @@ http://localhost:8080
     "bodyplaceholder": ["Alice", "GoLang Community"]
   },
   "channel": "email"
+}
+```
+
+**Response:**
+```json
+{
+  "code": 200,
+  "message": ""
 }
 ```
